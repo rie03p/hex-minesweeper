@@ -7,10 +7,11 @@ type Board = {
   hexSize: number
   svgWidth: number
   svgHeight: number
+  onGameClear: () => void
   onGameOver: () => void
 }
 
-export const Board: React.FC<Board> = ({cells, hexSize, svgWidth, svgHeight, onGameOver}) => {
+export const Board: React.FC<Board> = ({cells, hexSize, svgWidth, svgHeight, onGameClear, onGameOver}) => {
   const [board, setBoard] = useState<Cell[][]>(cells)
 
   // 左クリックイベント
@@ -48,6 +49,14 @@ export const Board: React.FC<Board> = ({cells, hexSize, svgWidth, svgHeight, onG
       return newBoard
     })
   }, [])
+
+  React.useEffect(() => {
+    // 爆弾以外のセルが全て開かれたかどうかを判定
+    const isAllRevealed = board.every((rowCells) => rowCells.every((cell) => cell.isRevealed || cell.isBomb))
+    if (isAllRevealed) {
+      onGameClear()
+    }
+  }, [board, onGameClear])
 
   return (
     <svg width={svgWidth} height={svgHeight} viewBox={`0 0 ${svgWidth} ${svgHeight}`}>

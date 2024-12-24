@@ -12,13 +12,19 @@ export type Cell = {
   value?: number
 }
 
+enum GameState {
+  Playing,
+  GameOver,
+  GameClear,
+}
+
 type ManageBoardProps = {
   rows: number
   columns: number
   hexSize: number // 六角形の1辺の長さ
 }
 export const ManageBoard: React.FC<ManageBoardProps> = ({rows, columns, hexSize}) => {
-  const [isGameOver, setIsGameOver] = useState<boolean>(false)
+  const [gameState, setGameState] = useState<GameState>(GameState.Playing)
   const hexWidth = hexSize * 2
   const hexHeight = Math.sqrt(3) * hexSize
   const horizontalStep = hexWidth * 0.75
@@ -94,14 +100,20 @@ export const ManageBoard: React.FC<ManageBoardProps> = ({rows, columns, hexSize}
   // Restart ボタンの処理
   const handleRestart = useCallback(() => {
     setBoard(createBoard())
-    setIsGameOver(false)
+    setGameState(GameState.Playing)
   }, [createBoard])
 
   return (
     <div>
-      {isGameOver && (
+      {gameState === GameState.GameOver && (
         <div>
           <h2>Game Over</h2>
+          <button onClick={handleRestart}>Restart</button>
+        </div>
+      )}
+      {gameState === GameState.GameClear && (
+        <div>
+          <h2>Game Clear</h2>
           <button onClick={handleRestart}>Restart</button>
         </div>
       )}
@@ -111,7 +123,8 @@ export const ManageBoard: React.FC<ManageBoardProps> = ({rows, columns, hexSize}
         hexSize={hexSize}
         svgWidth={svgWidth}
         svgHeight={svgHeight}
-        onGameOver={() => setIsGameOver(true)}
+        onGameClear={() => setGameState(GameState.GameClear)}
+        onGameOver={() => setGameState(GameState.GameOver)}
       />
     </div>
   )
