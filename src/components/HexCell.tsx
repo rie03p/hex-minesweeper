@@ -1,5 +1,5 @@
 import React from 'react'
-import {Cell} from './HexGrid'
+import {Cell} from './ManageBoard'
 
 type HexCellProps = {
   cell: Cell
