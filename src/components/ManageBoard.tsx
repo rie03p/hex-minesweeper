@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useCallback, useState} from 'react'
 import {Board} from './Board'
 
 export type Cell = {
@@ -18,6 +18,7 @@ type ManageBoardProps = {
   hexSize: number // 六角形の1辺の長さ
 }
 export const ManageBoard: React.FC<ManageBoardProps> = ({rows, columns, hexSize}) => {
+  const [isGameOver, setIsGameOver] = useState<boolean>(false)
   const hexWidth = hexSize * 2
   const hexHeight = Math.sqrt(3) * hexSize
   const horizontalStep = hexWidth * 0.75
@@ -71,7 +72,7 @@ export const ManageBoard: React.FC<ManageBoardProps> = ({rows, columns, hexSize}
   }
 
   // ボードを生成する関数
-  const createBoard = (): Cell[][] => {
+  const createBoard = useCallback((): Cell[][] => {
     const board: Cell[][] = []
     for (let row = 0; row < rows; row++) {
       const rowCells: Cell[] = []
@@ -85,11 +86,33 @@ export const ManageBoard: React.FC<ManageBoardProps> = ({rows, columns, hexSize}
       board.push(rowCells)
     }
     return countBombs(board)
-  }
+  }, [rows, columns, horizontalStep, verticalStep, hexSize, hexHeight])
+
+  // ボードの状態
+  const [board, setBoard] = useState<Cell[][]>(createBoard)
+
+  // Restart ボタンの処理
+  const handleRestart = useCallback(() => {
+    setBoard(createBoard())
+    setIsGameOver(false)
+  }, [createBoard])
 
   return (
     <div>
-      <Board cells={createBoard()} hexSize={hexSize} svgWidth={svgWidth} svgHeight={svgHeight} />
+      {isGameOver && (
+        <div>
+          <h2>Game Over</h2>
+          <button onClick={handleRestart}>Restart</button>
+        </div>
+      )}
+      <Board
+        key={JSON.stringify(board)}
+        cells={board}
+        hexSize={hexSize}
+        svgWidth={svgWidth}
+        svgHeight={svgHeight}
+        onGameOver={() => setIsGameOver(true)}
+      />
     </div>
   )
 }

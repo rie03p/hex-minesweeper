@@ -7,25 +7,32 @@ type Board = {
   hexSize: number
   svgWidth: number
   svgHeight: number
+  onGameOver: () => void
 }
 
-export const Board: React.FC<Board> = ({cells, hexSize, svgWidth, svgHeight}) => {
+export const Board: React.FC<Board> = ({cells, hexSize, svgWidth, svgHeight, onGameOver}) => {
   const [board, setBoard] = useState<Cell[][]>(cells)
 
   // 左クリックイベント
-  const onLeftClick = useCallback((row: number, col: number) => {
-    setBoard((prevBoard) => {
-      // セルを直接更新する
-      const cell = prevBoard[row][col]
-      if (cell.isFlag || cell.isRevealed) return prevBoard
+  const onLeftClick = useCallback(
+    (row: number, col: number) => {
+      setBoard((prevBoard) => {
+        // セルを直接更新する
+        const cell = prevBoard[row][col]
+        if (cell.isFlag || cell.isRevealed) return prevBoard
 
-      const updatedCell = {...cell, isRevealed: true}
-      const newBoard = [...prevBoard]
-      newBoard[row] = [...prevBoard[row]]
-      newBoard[row][col] = updatedCell
-      return newBoard
-    })
-  }, [])
+        const updatedCell = {...cell, isRevealed: true}
+        const newBoard = [...prevBoard]
+        newBoard[row] = [...prevBoard[row]]
+        newBoard[row][col] = updatedCell
+        return newBoard
+      })
+      if (board[row][col].isBomb) {
+        onGameOver()
+      }
+    },
+    [board, onGameOver],
+  )
 
   // 右クリックイベント（旗の切り替え）
   const onRightClick = useCallback((row: number, col: number) => {
