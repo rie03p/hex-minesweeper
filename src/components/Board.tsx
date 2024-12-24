@@ -1,18 +1,19 @@
 import React, {useCallback, useState} from 'react'
 import {HexCell} from './HexCell'
 import {Cell} from './ManageBoard'
-import {evenColOffsets, oddColOffsets} from '../utils/constants'
+import {evenColOffsets, GameState, oddColOffsets} from '../utils/constants'
 
 type Board = {
   cells: Cell[][]
   hexSize: number
   svgWidth: number
   svgHeight: number
+  gameState: GameState
   onGameClear: () => void
   onGameOver: () => void
 }
 
-export const Board: React.FC<Board> = ({cells, hexSize, svgWidth, svgHeight, onGameClear, onGameOver}) => {
+export const Board: React.FC<Board> = ({cells, hexSize, svgWidth, svgHeight, gameState, onGameClear, onGameOver}) => {
   const [board, setBoard] = useState<Cell[][]>(cells)
 
   const revealAdjacentCells = useCallback((row: number, col: number, prevBoard: Cell[][]): Cell[][] => {
@@ -48,6 +49,9 @@ export const Board: React.FC<Board> = ({cells, hexSize, svgWidth, svgHeight, onG
   // 左クリックイベント
   const onLeftClick = useCallback(
     (row: number, col: number) => {
+      if (gameState !== GameState.Playing) return
+      if (board[row][col].isRevealed || board[row][col].isFlag) return
+
       setBoard((prevBoard) => {
         const cell = prevBoard[row][col]
         if (cell.isFlag || cell.isRevealed) return prevBoard
@@ -55,6 +59,8 @@ export const Board: React.FC<Board> = ({cells, hexSize, svgWidth, svgHeight, onG
         // セルを開く
         let newBoard = [...prevBoard]
         if (cell.isBomb) {
+          newBoard[row] = [...prevBoard[row]]
+          newBoard[row][col] = {...cell, isRevealed: true}
           onGameOver()
         } else if (cell.value === 0) {
           // 隣接セルを再帰的に開く
@@ -67,7 +73,7 @@ export const Board: React.FC<Board> = ({cells, hexSize, svgWidth, svgHeight, onG
         return newBoard
       })
     },
-    [onGameOver, revealAdjacentCells],
+    [onGameOver, revealAdjacentCells, gameState, board],
   )
 
   // 右クリックイベント（旗の切り替え）

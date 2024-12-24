@@ -34,6 +34,7 @@ export const ManageBoard: React.FC<ManageBoardProps> = ({rows, columns, hexSize}
     const newBoard = board.map((rowCells, row) =>
       rowCells.map((cell, col) => {
         let count = 0
+        // 偶数列と奇数列で隣接セルのオフセットが異なる
         const offsets = col % 2 === 0 ? evenColOffsets : oddColOffsets
         for (const [dy, dx] of offsets) {
           const newRow = row + dy
@@ -55,9 +56,9 @@ export const ManageBoard: React.FC<ManageBoardProps> = ({rows, columns, hexSize}
     return newBoard
   }
 
-  // ボードを生成する関数
   const createBoard = useCallback((): Cell[][] => {
     const totalCells = rows * columns
+    // 爆弾が設置される割合を指定できるよ
     const totalBombs = Math.floor(totalCells * 0.15)
 
     const bombPositions = new Set<number>()
@@ -87,7 +88,6 @@ export const ManageBoard: React.FC<ManageBoardProps> = ({rows, columns, hexSize}
     return countBombs(board)
   }, [rows, columns, horizontalStep, verticalStep, hexSize, hexHeight])
 
-  // ボードの状態
   const [board, setBoard] = useState<Cell[][]>(createBoard)
 
   const handleRestart = useCallback(() => {
@@ -115,6 +115,7 @@ export const ManageBoard: React.FC<ManageBoardProps> = ({rows, columns, hexSize}
         hexSize={hexSize}
         svgWidth={svgWidth}
         svgHeight={svgHeight}
+        gameState={gameState}
         onGameClear={() => setGameState(GameState.GameClear)}
         onGameOver={() => setGameState(GameState.GameOver)}
       />
