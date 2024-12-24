@@ -57,15 +57,30 @@ export const ManageBoard: React.FC<ManageBoardProps> = ({rows, columns, hexSize}
 
   // ボードを生成する関数
   const createBoard = useCallback((): Cell[][] => {
+    const totalCells = rows * columns
+    const totalBombs = Math.floor(totalCells * 0.15)
+
+    const bombPositions = new Set<number>()
+    while (bombPositions.size < totalBombs) {
+      bombPositions.add(Math.floor(Math.random() * totalCells))
+    }
+
     const board: Cell[][] = []
     for (let row = 0; row < rows; row++) {
       const rowCells: Cell[] = []
       for (let col = 0; col < columns; col++) {
+        const index = row * columns + col
         const x = col * horizontalStep + hexSize
         const y = row * verticalStep + (col % 2 === 0 ? 0 : hexHeight / 2) + hexSize
-        // isBombをランダムで設定
-        const isBomb = Math.random() < 0.1
-        rowCells.push({x, y, row, col, isFlag: false, isBomb, isRevealed: false})
+        rowCells.push({
+          x,
+          y,
+          row,
+          col,
+          isFlag: false,
+          isBomb: bombPositions.has(index),
+          isRevealed: false,
+        })
       }
       board.push(rowCells)
     }
@@ -75,7 +90,6 @@ export const ManageBoard: React.FC<ManageBoardProps> = ({rows, columns, hexSize}
   // ボードの状態
   const [board, setBoard] = useState<Cell[][]>(createBoard)
 
-  // Restart ボタンの処理
   const handleRestart = useCallback(() => {
     setBoard(createBoard())
     setGameState(GameState.Playing)
