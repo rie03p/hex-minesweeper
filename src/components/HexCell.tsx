@@ -1,17 +1,17 @@
 import React from 'react'
+import {Cell} from './HexGrid'
 
 type HexCellProps = {
-  x: number
-  y: number
+  cell: Cell
   size: number
-  fill: string
   stroke: string
-  isFlag: boolean
   onLeftClick: () => void
   onRightClick: () => void
 }
 
-export const HexCell: React.FC<HexCellProps> = ({x, y, size, fill, stroke, isFlag, onLeftClick, onRightClick}) => {
+export const HexCell: React.FC<HexCellProps> = ({cell, size, stroke, onLeftClick, onRightClick}) => {
+  const fill = cell.isRevealed ? 'white' : 'lightblue'
+
   return (
     <g
       onClick={onLeftClick}
@@ -19,8 +19,11 @@ export const HexCell: React.FC<HexCellProps> = ({x, y, size, fill, stroke, isFla
         e.preventDefault() // 右クリックメニューを無効にする
         onRightClick()
       }}>
-      <polygon points={getHexagonPoints(x, y, size)} fill={fill} stroke={stroke} />
-      {isFlag && <image href="/flag.svg" x={x - size / 2} y={y - size / 2} width={size} height={size} />}
+      <polygon points={getHexagonPoints(cell.x, cell.y, size)} fill={fill} stroke={stroke} />
+      {cell.isFlag && <image href="/flag.svg" x={cell.x - size / 2} y={cell.y - size / 2} width={size} height={size} />}
+      {cell.isRevealed && cell.isBomb && (
+        <image href="/bomb.svg" x={cell.x - size / 2} y={cell.y - size / 2} width={size} height={size} />
+      )}
     </g>
   )
 }

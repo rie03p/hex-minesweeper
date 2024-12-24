@@ -1,12 +1,14 @@
 import React, {useCallback, useState} from 'react'
 import {HexCell} from './HexCell'
 
-type Cell = {
+export type Cell = {
   x: number
   y: number
   row: number
   col: number
   isFlag: boolean
+  isBomb: boolean
+  isRevealed: boolean
 }
 
 type HexGridProps = {
@@ -33,7 +35,9 @@ export const HexGrid: React.FC<HexGridProps> = ({rows, columns, hexSize}) => {
       for (let col = 0; col < columns; col++) {
         const x = col * horizontalStep + hexSize
         const y = row * verticalStep + (col % 2 === 0 ? 0 : hexHeight / 2) + hexSize
-        rowCells.push({x, y, row, col, isFlag: false})
+        // isBombをランダムで設定
+        const isBomb = Math.random() < 0.1
+        rowCells.push({x, y, row, col, isFlag: false, isBomb, isRevealed: false})
       }
       board.push(rowCells)
     }
@@ -46,7 +50,17 @@ export const HexGrid: React.FC<HexGridProps> = ({rows, columns, hexSize}) => {
   const onLeftClick = useCallback(
     (row: number, col: number) => {
       if (board[row][col].isFlag) return
-      console.log(`Left Clicked: Row ${row}, Col ${col}`)
+      setBoard((prevBoard) => {
+        const newBoard = prevBoard.map((rowCells, rIdx) => {
+          return rowCells.map((cell, cIdx) => {
+            if (rIdx === row && cIdx === col) {
+              return {...cell, isRevealed: true}
+            }
+            return cell
+          })
+        })
+        return newBoard
+      })
     },
     [board],
   )
@@ -75,14 +89,11 @@ export const HexGrid: React.FC<HexGridProps> = ({rows, columns, hexSize}) => {
         rowCells.map((cell) => (
           <React.Fragment key={`${cell.row}-${cell.col}`}>
             <HexCell
-              x={cell.x}
-              y={cell.y}
+              cell={cell}
               size={hexSize}
               onLeftClick={() => onLeftClick(cell.row, cell.col)}
               onRightClick={() => onRightClick(cell.row, cell.col)}
-              fill="lightblue"
               stroke="black"
-              isFlag={cell.isFlag}
             />
           </React.Fragment>
         )),
