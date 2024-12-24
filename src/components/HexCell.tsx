@@ -21,8 +21,11 @@ export const HexCell: React.FC<HexCellProps> = ({cell, size, stroke, onLeftClick
       }}>
       <polygon points={getHexagonPoints(cell.x, cell.y, size)} fill={fill} stroke={stroke} />
       {cell.isFlag && <image href="/flag.svg" x={cell.x - size / 2} y={cell.y - size / 2} width={size} height={size} />}
-      {cell.isRevealed && cell.isBomb && (
-        <image href="/bomb.svg" x={cell.x - size / 2} y={cell.y - size / 2} width={size} height={size} />
+      {cell.isBomb && <image href="/bomb.svg" x={cell.x - size / 2} y={cell.y - size / 2} width={size} height={size} />}
+      {cell.isRevealed && cell.value && cell.value > 0 && !cell.isBomb && (
+        <text x={cell.x} y={cell.y} textAnchor="middle" dominantBaseline="middle" fill="black">
+          {cell.value}
+        </text>
       )}
     </g>
   )

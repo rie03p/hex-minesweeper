@@ -9,6 +9,7 @@ export type Cell = {
   isFlag: boolean
   isBomb: boolean
   isRevealed: boolean
+  value?: number
 }
 
 type HexGridProps = {
@@ -27,6 +28,49 @@ export const HexGrid: React.FC<HexGridProps> = ({rows, columns, hexSize}) => {
   const svgWidth = columns * horizontalStep + hexSize
   const svgHeight = rows * verticalStep + hexHeight / 2
 
+  // 周りの爆弾の数を計算する関数
+  const countBombs = (board: Cell[][]): Cell[][] => {
+    const evenColOffsets = [
+      [-1, 0],
+      [0, 1],
+      [1, 1],
+      [1, 0],
+      [1, -1],
+      [0, -1],
+    ]
+    const oddColOffsets = [
+      [-1, 0],
+      [-1, 1],
+      [0, 1],
+      [1, 0],
+      [0, -1],
+      [-1, -1],
+    ]
+
+    const newBoard = board.map((rowCells, row) =>
+      rowCells.map((cell, col) => {
+        let count = 0
+        const offsets = col % 2 === 0 ? oddColOffsets : evenColOffsets
+        for (const [dy, dx] of offsets) {
+          const newRow = row + dy
+          const newCol = col + dx
+
+          // 隣接セルが範囲内か確認
+          if (newRow >= 0 && newRow < board.length && newCol >= 0 && newCol < board[0].length) {
+            if (board[newRow][newCol].isBomb) {
+              count++
+            }
+          }
+        }
+        return {
+          ...cell,
+          value: count,
+        }
+      }),
+    )
+    return newBoard
+  }
+
   // ボードを生成する関数
   const createBoard = (): Cell[][] => {
     const board: Cell[][] = []
@@ -41,7 +85,7 @@ export const HexGrid: React.FC<HexGridProps> = ({rows, columns, hexSize}) => {
       }
       board.push(rowCells)
     }
-    return board
+    return countBombs(board)
   }
 
   const [board, setBoard] = useState<Cell[][]>(createBoard())
