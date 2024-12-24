@@ -1,5 +1,6 @@
 import React, {useCallback, useState} from 'react'
 import {Board} from './Board'
+import {evenColOffsets, GameState, oddColOffsets} from '../utils/constants'
 
 export type Cell = {
   x: number
@@ -10,12 +11,6 @@ export type Cell = {
   isBomb: boolean
   isRevealed: boolean
   value?: number
-}
-
-enum GameState {
-  Playing,
-  GameOver,
-  GameClear,
 }
 
 type ManageBoardProps = {
@@ -36,23 +31,6 @@ export const ManageBoard: React.FC<ManageBoardProps> = ({rows, columns, hexSize}
 
   // 周りの爆弾の数を計算する関数
   const countBombs = (board: Cell[][]): Cell[][] => {
-    const oddColOffsets = [
-      [-1, 0],
-      [0, 1],
-      [1, 1],
-      [1, 0],
-      [1, -1],
-      [0, -1],
-    ]
-    const evenColOffsets = [
-      [-1, 0],
-      [-1, 1],
-      [0, 1],
-      [1, 0],
-      [0, -1],
-      [-1, -1],
-    ]
-
     const newBoard = board.map((rowCells, row) =>
       rowCells.map((cell, col) => {
         let count = 0

@@ -1,6 +1,7 @@
 import React, {useCallback, useState} from 'react'
 import {HexCell} from './HexCell'
 import {Cell} from './ManageBoard'
+import {evenColOffsets, oddColOffsets} from '../utils/constants'
 
 type Board = {
   cells: Cell[][]
@@ -14,25 +15,59 @@ type Board = {
 export const Board: React.FC<Board> = ({cells, hexSize, svgWidth, svgHeight, onGameClear, onGameOver}) => {
   const [board, setBoard] = useState<Cell[][]>(cells)
 
+  const revealAdjacentCells = useCallback((row: number, col: number, prevBoard: Cell[][]): Cell[][] => {
+    const offsets = col % 2 === 0 ? evenColOffsets : oddColOffsets
+    const newBoard = [...prevBoard]
+
+    const dfs = (currentRow: number, currentCol: number) => {
+      const cell = newBoard[currentRow][currentCol]
+      if (cell.isRevealed || cell.isFlag || cell.isBomb) return
+
+      // 現在のセルを開く
+      newBoard[currentRow] = [...newBoard[currentRow]]
+      newBoard[currentRow][currentCol] = {...cell, isRevealed: true}
+
+      // value が 0 の場合、隣接セルを再帰的に開く
+      if (cell.value === 0) {
+        for (const [dy, dx] of offsets) {
+          const newRow = currentRow + dy
+          const newCol = currentCol + dx
+
+          // 隣接セルが範囲内であれば再帰的に探索
+          if (newRow >= 0 && newRow < newBoard.length && newCol >= 0 && newCol < newBoard[0].length) {
+            dfs(newRow, newCol)
+          }
+        }
+      }
+    }
+
+    dfs(row, col)
+    return newBoard
+  }, [])
+
   // 左クリックイベント
   const onLeftClick = useCallback(
     (row: number, col: number) => {
       setBoard((prevBoard) => {
-        // セルを直接更新する
         const cell = prevBoard[row][col]
         if (cell.isFlag || cell.isRevealed) return prevBoard
 
-        const updatedCell = {...cell, isRevealed: true}
-        const newBoard = [...prevBoard]
-        newBoard[row] = [...prevBoard[row]]
-        newBoard[row][col] = updatedCell
+        // セルを開く
+        let newBoard = [...prevBoard]
+        if (cell.isBomb) {
+          onGameOver()
+        } else if (cell.value === 0) {
+          // 隣接セルを再帰的に開く
+          newBoard = revealAdjacentCells(row, col, prevBoard)
+        } else {
+          // 通常セルを開く
+          newBoard[row] = [...prevBoard[row]]
+          newBoard[row][col] = {...cell, isRevealed: true}
+        }
         return newBoard
       })
-      if (board[row][col].isBomb) {
-        onGameOver()
-      }
     },
-    [board, onGameOver],
+    [onGameOver, revealAdjacentCells],
   )
 
   // 右クリックイベント（旗の切り替え）
