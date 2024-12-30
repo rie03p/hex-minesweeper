@@ -1,10 +1,11 @@
-import React, {useCallback, useState} from 'react'
+import React, {useCallback} from 'react'
 import {HexCell} from './HexCell'
 import {Cell} from './ManageBoard'
 import {evenColOffsets, GameState, oddColOffsets} from '../utils/constants'
 
 type Board = {
   cells: Cell[][]
+  setCells: React.Dispatch<React.SetStateAction<Cell[][]>>
   hexSize: number
   svgWidth: number
   svgHeight: number
@@ -13,9 +14,16 @@ type Board = {
   onGameOver: () => void
 }
 
-export const Board: React.FC<Board> = ({cells, hexSize, svgWidth, svgHeight, gameState, onGameClear, onGameOver}) => {
-  const [board, setBoard] = useState<Cell[][]>(cells)
-
+export const Board: React.FC<Board> = ({
+  cells,
+  setCells,
+  hexSize,
+  svgWidth,
+  svgHeight,
+  gameState,
+  onGameClear,
+  onGameOver,
+}) => {
   const revealAdjacentCells = useCallback((row: number, col: number, prevBoard: Cell[][]): Cell[][] => {
     const offsets = col % 2 === 0 ? evenColOffsets : oddColOffsets
     const newBoard = [...prevBoard]
@@ -50,9 +58,9 @@ export const Board: React.FC<Board> = ({cells, hexSize, svgWidth, svgHeight, gam
   const onLeftClick = useCallback(
     (row: number, col: number) => {
       if (gameState !== GameState.Playing) return
-      if (board[row][col].isRevealed || board[row][col].isFlag) return
+      if (cells[row][col].isRevealed || cells[row][col].isFlag) return
 
-      setBoard((prevBoard) => {
+      setCells((prevBoard: Cell[][]) => {
         const cell = prevBoard[row][col]
         if (cell.isFlag || cell.isRevealed) return prevBoard
 
@@ -73,35 +81,38 @@ export const Board: React.FC<Board> = ({cells, hexSize, svgWidth, svgHeight, gam
         return newBoard
       })
     },
-    [onGameOver, revealAdjacentCells, gameState, board],
+    [cells, gameState, onGameOver, revealAdjacentCells, setCells],
   )
 
   // 右クリックイベント（旗の切り替え）
-  const onRightClick = useCallback((row: number, col: number) => {
-    setBoard((prevBoard) => {
-      const newBoard = prevBoard.map((rowCells, rIdx) => {
-        return rowCells.map((cell, cIdx) => {
-          if (rIdx === row && cIdx === col) {
-            return {...cell, isFlag: !cell.isFlag}
-          }
-          return cell
+  const onRightClick = useCallback(
+    (row: number, col: number) => {
+      setCells((prevBoard: Cell[][]) => {
+        const newBoard = prevBoard.map((rowCells, rIdx) => {
+          return rowCells.map((cell, cIdx) => {
+            if (rIdx === row && cIdx === col) {
+              return {...cell, isFlag: !cell.isFlag}
+            }
+            return cell
+          })
         })
+        return newBoard
       })
-      return newBoard
-    })
-  }, [])
+    },
+    [setCells],
+  )
 
   React.useEffect(() => {
     // 爆弾以外のセルが全て開かれたかどうかを判定
-    const isAllRevealed = board.every((rowCells) => rowCells.every((cell) => cell.isRevealed || cell.isBomb))
+    const isAllRevealed = cells.every((rowCells) => rowCells.every((cell) => cell.isRevealed || cell.isBomb))
     if (isAllRevealed) {
       onGameClear()
     }
-  }, [board, onGameClear])
+  }, [cells, onGameClear])
 
   return (
     <svg width={svgWidth} height={svgHeight} viewBox={`0 0 ${svgWidth} ${svgHeight}`}>
-      {board.map((rowCells) =>
+      {cells.map((rowCells) =>
         rowCells.map((cell) => (
           <React.Fragment key={`${cell.row}-${cell.col}`}>
             <HexCell

@@ -91,7 +91,7 @@ export const ManageBoard: React.FC<ManageBoardProps> = ({rows, columns, hexSize}
   const [board, setBoard] = useState<Cell[][]>(createBoard)
 
   const handleRestart = useCallback(() => {
-    setBoard(createBoard())
+    setBoard(createBoard)
     setGameState(GameState.Playing)
   }, [createBoard])
 
@@ -112,6 +112,7 @@ export const ManageBoard: React.FC<ManageBoardProps> = ({rows, columns, hexSize}
       <Board
         key={JSON.stringify(board)}
         cells={board}
+        setCells={setBoard}
         hexSize={hexSize}
         svgWidth={svgWidth}
         svgHeight={svgHeight}
