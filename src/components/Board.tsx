@@ -10,6 +10,7 @@ type Board = {
   svgWidth: number
   svgHeight: number
   gameState: GameState
+  installBombs: (row: number, col: number) => Cell[][]
   onGameClear: () => void
   onGameOver: () => void
 }
@@ -21,6 +22,7 @@ export const Board: React.FC<Board> = ({
   svgWidth,
   svgHeight,
   gameState,
+  installBombs,
   onGameClear,
   onGameOver,
 }) => {
@@ -64,6 +66,13 @@ export const Board: React.FC<Board> = ({
         const cell = prevBoard[row][col]
         if (cell.isFlag || cell.isRevealed) return prevBoard
 
+        // 最初のクリック時に爆弾を設置
+        if (!prevBoard.some((rowCells) => rowCells.some((cell) => cell.isRevealed))) {
+          const board = installBombs(row, col)
+          const newBoard = revealAdjacentCells(row, col, board)
+          return newBoard
+        }
+
         // セルを開く
         let newBoard = [...prevBoard]
         if (cell.isBomb) {
@@ -81,7 +90,7 @@ export const Board: React.FC<Board> = ({
         return newBoard
       })
     },
-    [cells, gameState, onGameOver, revealAdjacentCells, setCells],
+    [cells, gameState, setCells, installBombs, onGameOver, revealAdjacentCells],
   )
 
   // 右クリックイベント（旗の切り替え）

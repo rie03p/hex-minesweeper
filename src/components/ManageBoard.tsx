@@ -10,7 +10,7 @@ export type Cell = {
   isFlag: boolean
   isBomb: boolean
   isRevealed: boolean
-  value?: number
+  value: number
 }
 
 type ManageBoardProps = {
@@ -57,20 +57,10 @@ export const ManageBoard: React.FC<ManageBoardProps> = ({rows, columns, hexSize}
   }
 
   const createBoard = useCallback((): Cell[][] => {
-    const totalCells = rows * columns
-    // 爆弾が設置される割合を指定できるよ
-    const totalBombs = Math.floor(totalCells * 0.15)
-
-    const bombPositions = new Set<number>()
-    while (bombPositions.size < totalBombs) {
-      bombPositions.add(Math.floor(Math.random() * totalCells))
-    }
-
     const board: Cell[][] = []
     for (let row = 0; row < rows; row++) {
       const rowCells: Cell[] = []
       for (let col = 0; col < columns; col++) {
-        const index = row * columns + col
         const x = col * horizontalStep + hexSize
         const y = row * verticalStep + (col % 2 === 0 ? 0 : hexHeight / 2) + hexSize
         rowCells.push({
@@ -79,13 +69,14 @@ export const ManageBoard: React.FC<ManageBoardProps> = ({rows, columns, hexSize}
           row,
           col,
           isFlag: false,
-          isBomb: bombPositions.has(index),
+          isBomb: false,
           isRevealed: false,
+          value: 0,
         })
       }
       board.push(rowCells)
     }
-    return countBombs(board)
+    return board
   }, [rows, columns, horizontalStep, verticalStep, hexSize, hexHeight])
 
   const [board, setBoard] = useState<Cell[][]>(createBoard)
@@ -94,6 +85,56 @@ export const ManageBoard: React.FC<ManageBoardProps> = ({rows, columns, hexSize}
     setBoard(createBoard)
     setGameState(GameState.Playing)
   }, [createBoard])
+
+  const installBombs = useCallback(
+    (y: number, x: number): Cell[][] => {
+      const totalCells = rows * columns
+      // 爆弾が設置される割合を指定できるよ
+      const totalBombs = Math.floor(totalCells * 0.15)
+      const bombPositions = new Set<string>()
+
+      // クリックされたセルとその周囲を避ける
+      const excludePositions = new Set<string>()
+      const offsets = y % 2 === 0 ? evenColOffsets : oddColOffsets
+
+      // クリックされたセルを除外リストに追加
+      excludePositions.add(`${y},${x}`)
+
+      // クリックされたセルの隣接セルを除外リストに追加
+      for (const [dy, dx] of offsets) {
+        const newRow = y + dy
+        const newCol = x + dx
+        if (newRow >= 0 && newRow < rows && newCol >= 0 && newCol < columns) {
+          excludePositions.add(`${newRow},${newCol}`)
+        }
+      }
+
+      // 爆弾の配置
+      while (bombPositions.size < totalBombs) {
+        const randomRow = Math.floor(Math.random() * rows)
+        const randomCol = Math.floor(Math.random() * columns)
+        const position = `${randomRow},${randomCol}`
+
+        // 除外リストに含まれていない場合のみ爆弾を配置
+        if (!excludePositions.has(position)) {
+          bombPositions.add(position)
+        }
+      }
+
+      // ボードに爆弾を設定
+      const newBoard = board.map((rowCells, row) =>
+        rowCells.map((cell, col) => {
+          const position = `${row},${col}`
+          return {
+            ...cell,
+            isBomb: bombPositions.has(position),
+          }
+        }),
+      )
+      return countBombs(newBoard)
+    },
+    [board, rows, columns],
+  )
 
   return (
     <div>
@@ -117,6 +158,7 @@ export const ManageBoard: React.FC<ManageBoardProps> = ({rows, columns, hexSize}
         svgWidth={svgWidth}
         svgHeight={svgHeight}
         gameState={gameState}
+        installBombs={installBombs}
         onGameClear={() => setGameState(GameState.GameClear)}
         onGameOver={() => setGameState(GameState.GameOver)}
       />
