@@ -11,7 +11,7 @@ This is a Hexagon Minesweeper game built with React, TypeScript, and Vite.
 1. Clone the repository
 
 ```sh
-git clone https://github.com/rie39p/hex-minesweeper.git
+git clone https://github.com/rie03p/hex-minesweeper.git
 cd hexagon-minesweeper
 ```
 
